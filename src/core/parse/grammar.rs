@@ -16,8 +16,6 @@ pub struct Grammar<Symbol: Data + Default> {
     #[allow(dead_code)]
     non_terminals: HashSet<Symbol>,
     terminals: HashSet<Symbol>,
-    ignorable: HashSet<Symbol>,
-    //TODO use this
     start: Symbol,
 }
 
@@ -129,7 +127,7 @@ impl<Symbol: Data + Default> GrammarBuilder<Symbol> {
 
         for ignored in &self.ignorable {
             if !terminals.contains(ignored) {
-                return Err(BuildError::NotTerminalIgnoredErr(ignored.to_string()));
+                return Err(BuildError::NonTerminalIgnoredErr(ignored.to_string()));
             }
         }
 
@@ -138,7 +136,6 @@ impl<Symbol: Data + Default> GrammarBuilder<Symbol> {
             nss,
             non_terminals,
             terminals,
-            ignorable: self.ignorable,
             start,
         })
     }
@@ -186,13 +183,13 @@ impl<Symbol: Data + Default> GrammarBuilder<Symbol> {
 
 #[derive(Debug)]
 pub enum BuildError {
-    NotTerminalIgnoredErr(String),
+    NonTerminalIgnoredErr(String),
 }
 
 impl fmt::Display for BuildError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            BuildError::NotTerminalIgnoredErr(ref symbol) =>
+            BuildError::NonTerminalIgnoredErr(ref symbol) =>
                 write!(f, "Ignored symbol '{}' is non-terminal", symbol),
         }
     }
@@ -201,7 +198,7 @@ impl fmt::Display for BuildError {
 impl error::Error for BuildError {
     fn cause(&self) -> Option<&error::Error> {
         match *self {
-            BuildError::NotTerminalIgnoredErr(_) => None,
+            BuildError::NonTerminalIgnoredErr(_) => None,
         }
     }
 }
