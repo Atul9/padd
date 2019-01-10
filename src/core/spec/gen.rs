@@ -38,7 +38,7 @@ pub fn generate_spec(
     )?;
 
     let ecdfa = ecdfa_builder.build()?;
-    let grammar = grammar_builder.build();
+    let grammar = grammar_builder.build()?;
 
     orphan_check(&ecdfa, &grammar)?;
 
@@ -58,6 +58,7 @@ fn traverse_spec_regions<CDFABuilderType, CDFAType>(
         match region_type {
             RegionType::Alphabet => traverse_alphabet_region(inner_node, cdfa_builder),
             RegionType::CDFA => traverse_cdfa_region(inner_node, cdfa_builder)?,
+            RegionType::Ignorable => traverse_ignorable_region(inner_node, grammar_builder),
             RegionType::Grammar => traverse_grammar_region(
                 inner_node,
                 grammar_builder,
@@ -69,6 +70,14 @@ fn traverse_spec_regions<CDFABuilderType, CDFAType>(
     };
 
     region::traverse(regions_node, &mut region_handler)
+}
+
+fn traverse_ignorable_region(
+    ignorable_node: &Tree<Symbol>,
+    grammar_builder: &mut GrammarBuilder<String>,
+) {
+    let terminal = ignorable_node.get_child(1).lhs.lexeme();
+    grammar_builder.mark_ignorable(terminal);
 }
 
 fn traverse_alphabet_region<CDFABuilderType, CDFAType>(

@@ -6,7 +6,7 @@ use {
         },
         parse::{
             self,
-            grammar::{Grammar, GrammarBuilder},
+            grammar::{self, Grammar, GrammarBuilder},
             Production,
             Tree,
         },
@@ -142,10 +142,10 @@ impl Data for Symbol {
 }
 
 lazy_static! {
-    static ref PATTERN_GRAMMAR: Grammar<Symbol> = build_pattern_grammar();
+    static ref PATTERN_GRAMMAR: Grammar<Symbol> = build_pattern_grammar().unwrap();
 }
 
-fn build_pattern_grammar() -> Grammar<Symbol> {
+fn build_pattern_grammar() -> Result<Grammar<Symbol>, grammar::BuildError> {
     //TODO create macros to make this declaration simpler
     //TODO optimize for left recursion
     let productions: Vec<Production<Symbol>> = vec![

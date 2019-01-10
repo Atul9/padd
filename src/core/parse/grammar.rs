@@ -3,7 +3,11 @@ use {
         data::Data,
         parse::Production,
     },
-    std::collections::{HashMap, HashSet},
+    std::{
+        collections::{HashMap, HashSet},
+        error,
+        fmt,
+    },
 };
 
 pub struct Grammar<Symbol: Data + Default> {
@@ -12,6 +16,8 @@ pub struct Grammar<Symbol: Data + Default> {
     #[allow(dead_code)]
     non_terminals: HashSet<Symbol>,
     terminals: HashSet<Symbol>,
+    ignorable: HashSet<Symbol>,
+    //TODO use this
     start: Symbol,
 }
 
@@ -41,6 +47,7 @@ impl<Symbol: Data + Default> Grammar<Symbol> {
 
 pub struct GrammarBuilder<Symbol: Data + Default> {
     prods_by_lhs: HashMap<Symbol, Vec<Production<Symbol>>>,
+    ignorable: HashSet<Symbol>,
     start: Option<Symbol>,
 }
 
@@ -48,6 +55,7 @@ impl<Symbol: Data + Default> GrammarBuilder<Symbol> {
     pub fn new() -> Self {
         GrammarBuilder {
             prods_by_lhs: HashMap::new(),
+            ignorable: HashSet::new(),
             start: None,
         }
     }
@@ -91,7 +99,11 @@ impl<Symbol: Data + Default> GrammarBuilder<Symbol> {
         self.start = Some(start.clone());
     }
 
-    pub fn build(self) -> Grammar<Symbol> {
+    pub fn mark_ignorable(&mut self, symbol: &Symbol) {
+        self.ignorable.insert(symbol.clone());
+    }
+
+    pub fn build(self) -> Result<Grammar<Symbol>, BuildError> {
         if self.start.is_none() {
             panic!("No start state specified for grammar");
         }
@@ -115,13 +127,20 @@ impl<Symbol: Data + Default> GrammarBuilder<Symbol> {
             .cloned()
             .collect();
 
-        Grammar {
+        for ignored in &self.ignorable {
+            if !terminals.contains(ignored) {
+                return Err(BuildError::NotTerminalIgnoredErr(ignored.to_string()));
+            }
+        }
+
+        Ok(Grammar {
             prods_by_lhs: self.prods_by_lhs,
             nss,
             non_terminals,
             terminals,
+            ignorable: self.ignorable,
             start,
-        }
+        })
     }
 
     fn build_nss(
@@ -162,5 +181,27 @@ impl<Symbol: Data + Default> GrammarBuilder<Symbol> {
         }
 
         nss
+    }
+}
+
+#[derive(Debug)]
+pub enum BuildError {
+    NotTerminalIgnoredErr(String),
+}
+
+impl fmt::Display for BuildError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            BuildError::NotTerminalIgnoredErr(ref symbol) =>
+                write!(f, "Ignored symbol '{}' is non-terminal", symbol),
+        }
+    }
+}
+
+impl error::Error for BuildError {
+    fn cause(&self) -> Option<&error::Error> {
+        match *self {
+            BuildError::NotTerminalIgnoredErr(_) => None,
+        }
     }
 }
