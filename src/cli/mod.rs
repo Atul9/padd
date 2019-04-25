@@ -30,7 +30,16 @@ pub fn run() {
     let matches = build_app();
 
     if let Some(matches) = matches.subcommand_matches("fmt") {
-        fmt(&matches);
+        if server::running() {
+            let mut command = String::new();
+            env::args().skip(1).for_each(|arg| {
+                command = format!("{} {}", command, arg)
+            });
+
+            server::send_command(command);
+        } else {
+            fmt(&matches);
+        }
     }
 
     if let Some(matches) = matches.subcommand_matches("forget") {

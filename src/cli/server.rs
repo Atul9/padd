@@ -59,9 +59,7 @@ fn handle_stream(stream: TcpStream) {
                     SIG_CHALLENGE => if let Err(err) = stream_writer.write_all(SIG_RESPONSE.as_bytes()) {
                         logger::err(&format!("Failed to write challenge response: {}", err));
                     }
-                    &_ => {
-                        //TODO(shane) parse command
-                    }
+                    &_ => execute_command(string)
                 },
                 Err(err) => logger::err(&format!(
                     "Failed to convert stream bytes to string: {}", err
@@ -102,4 +100,21 @@ pub fn running() -> bool {
     }
 
     false
+}
+
+pub fn send_command(mut command: String) {
+    command.push('\0');
+
+    match TcpStream::connect(SERVER_ADDRESS) {
+        Ok(mut stream) => {
+            if let Err(err) = stream.write_all(command.as_bytes()) {
+                logger::err(&format!("Failed to send command: {}", err));
+            }
+        }
+        Err(err) => logger::err(&format!("Failed to connect to padd server: {}", err))
+    }
+}
+
+fn execute_command(command: String) {
+    logger::info(&format!("Executing command: {}", &command));
 }
