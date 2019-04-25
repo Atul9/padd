@@ -5,7 +5,7 @@ extern crate regex;
 extern crate stopwatch;
 
 use {
-    cli::controller::{FormatCommand, FormatMetrics},
+    cli::formatter::{FormatCommand, FormatMetrics},
     std::path::Path,
 };
 
@@ -16,7 +16,7 @@ use self::{
     stopwatch::Stopwatch,
 };
 
-mod controller;
+mod formatter;
 mod daemon;
 mod logger;
 mod thread_pool;
@@ -111,7 +111,7 @@ fn fmt(matches: &ArgMatches) {
 
     let spec_path = matches.value_of("spec").unwrap();
 
-    let formatter = match controller::generate_formatter(&spec_path) {
+    let formatter = match formatter::generate_formatter(&spec_path) {
         Err(err) => {
             logger::fatal(&format!("Error loading specification {}: {}", &spec_path, err));
             return;
@@ -160,7 +160,7 @@ fn fmt(matches: &ArgMatches) {
 
     println!();
 
-    let metrics = controller::format(FormatCommand {
+    let metrics = formatter::format(FormatCommand {
         formatter,
         target_path,
         file_regex,
