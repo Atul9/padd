@@ -1,14 +1,3 @@
-use std::{
-    collections::LinkedList,
-    error,
-    fmt,
-    sync::{
-        Arc,
-        mpsc::{self, Receiver, Sender, SyncSender},
-    },
-    thread,
-};
-
 pub fn start() {
     //TODO(shane)
 }
@@ -29,5 +18,6 @@ fn receive_command() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    //TODO(shane) write tests
+
+//TODO(shane) write tests
 }
