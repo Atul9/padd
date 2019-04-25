@@ -20,6 +20,7 @@ mod controller;
 mod daemon;
 mod logger;
 mod thread_pool;
+mod tracker;
 
 pub fn run() {
     let matches = build_app();
@@ -86,8 +87,6 @@ fn build_app<'a>() -> ArgMatches<'a> {
         .subcommand(SubCommand::with_name("forget")
             .about("Clears all file tracking data")
             .arg(Arg::with_name("target")
-                .short("t")
-                .long("target")
                 .help("Sets the target directory to clear tracking data under")
                 .takes_value(true)
                 .value_name("PATH")
@@ -161,7 +160,7 @@ fn fmt(matches: &ArgMatches) {
 
     println!();
 
-    let metrics = controller::fmt(FormatCommand {
+    let metrics = controller::format(FormatCommand {
         formatter,
         target_path,
         file_regex,
@@ -205,18 +204,6 @@ fn print_final_status(elapsed_ms: i64, metrics: FormatMetrics) {
 }
 
 fn forget(matches: &ArgMatches) {
-    let target: &Path = match matches.value_of("target") {
-        None => panic!("No target path specified"),
-        Some(file) => Path::new(file)
-    };
-
-    println!("Clearing all tracking data from {} ...", target.to_string_lossy().to_string());
-
-    controller::clear_tracking(target);
-
-    let total = 0; //TOTAL.load(Ordering::Relaxed);
-    match total {
-        1 => println!("Removed 1 tracking directory"),
-        _ => println!("Removed {} tracking directories", total)
-    }
+    let target: &Path = Path::new(matches.value_of("target").unwrap());
+    tracker::clear_tracking(target);
 }
