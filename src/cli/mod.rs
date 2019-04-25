@@ -225,14 +225,18 @@ fn forget(matches: &ArgMatches) {
 
 fn daemon(matches: &ArgMatches) {
     if matches.subcommand_matches("start").is_some() {
-        let child = Command::new(&env::args().next().unwrap()[..])
-            .arg("start-server")
-            .spawn()
-            .unwrap();
+        if server::running() {
+            logger::info(&format!("Daemon already running"));
+        } else {
+            let child = Command::new(&env::args().next().unwrap()[..])
+                .arg("start-server")
+                .spawn()
+                .unwrap();
 
-        logger::info(&format!("Starting padd daemon with pid {}", child.id()));
+            logger::info(&format!("Starting padd daemon with pid {}", child.id()));
+        }
     } else if matches.subcommand_matches("kill").is_some() {
-        //TODO(shane) kill the daemon process
+        server::kill();
     }
 }
 
