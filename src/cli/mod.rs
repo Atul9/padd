@@ -6,7 +6,11 @@ extern crate stopwatch;
 
 use {
     cli::formatter::{FormatCommand, FormatMetrics},
-    std::path::Path,
+    std::{
+        env,
+        path::Path,
+        process::Command,
+    },
 };
 
 use self::{
@@ -17,7 +21,7 @@ use self::{
 };
 
 mod formatter;
-mod daemon;
+mod server;
 mod logger;
 mod thread_pool;
 mod tracker;
@@ -31,6 +35,14 @@ pub fn run() {
 
     if let Some(matches) = matches.subcommand_matches("forget") {
         forget(&matches);
+    }
+
+    if let Some(matches) = matches.subcommand_matches("daemon") {
+        daemon(&matches);
+    }
+
+    if matches.subcommand_matches("start-server").is_some() {
+        server::start();
     }
 }
 
@@ -96,11 +108,14 @@ fn build_app<'a>() -> ArgMatches<'a> {
         .subcommand(SubCommand::with_name("daemon")
             .about("Daemon specific commands")
             .subcommand(SubCommand::with_name("start")
-                .about("Start padd in daemon mode")
+                .about("Start padd server in daemon mode")
             )
             .subcommand(SubCommand::with_name("kill")
                 .about("Stop the padd daemon")
             )
+        )
+        .subcommand(SubCommand::with_name("start-server")
+            .about("Start a padd server")
         )
         .get_matches()
 }
@@ -207,3 +222,17 @@ fn forget(matches: &ArgMatches) {
     let target: &Path = Path::new(matches.value_of("target").unwrap());
     tracker::clear_tracking(target);
 }
+
+fn daemon(matches: &ArgMatches) {
+    if matches.subcommand_matches("start").is_some() {
+        let child = Command::new(&env::args().next().unwrap()[..])
+            .arg("start-server")
+            .spawn()
+            .unwrap();
+
+        logger::info(&format!("Starting padd daemon with pid {}", child.id()));
+    } else if matches.subcommand_matches("kill").is_some() {
+        //TODO(shane) kill the daemon process
+    }
+}
+
